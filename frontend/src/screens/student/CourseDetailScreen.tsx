@@ -15,7 +15,7 @@ import { courseProgress } from '../../utils/selectors';
 type Props = NativeStackScreenProps<MainStackParamList, 'CourseDetail'>;
 
 export function CourseDetailScreen({ navigation, route }: Props) {
-  const { data, actions } = useData();
+  const { data, actions, mutationError } = useData();
   const course = data.courses.find((c) => c.id === route.params.courseId);
 
   if (!course) {
@@ -52,9 +52,10 @@ export function CourseDetailScreen({ navigation, route }: Props) {
         </Card>
       ) : (
         <View style={styles.enroll}>
-          <Button title="Inscrever-se no curso" onPress={() => actions.enroll(course.id)} />
+          <Button title="Inscrever-se no curso" onPress={() => { void actions.enroll(course.id).catch(() => undefined); }} />
         </View>
       )}
+      {!!mutationError && <Text style={styles.error} accessibilityRole="alert">{mutationError}</Text>}
 
       <Text style={styles.sectionTitle} accessibilityRole="header">Aulas</Text>
       {course.lessons.length === 0 ? (
@@ -64,7 +65,7 @@ export function CourseDetailScreen({ navigation, route }: Props) {
           <Pressable
             key={lesson.id}
             disabled={!course.enrolled}
-            onPress={() => actions.toggleLesson(course.id, lesson.id)}
+            onPress={() => { void actions.toggleLesson(course.id, lesson.id).catch(() => undefined); }}
             accessibilityRole="checkbox"
             accessibilityLabel={`Aula ${index + 1}: ${lesson.title}, ${lesson.minutes} minutos`}
             accessibilityHint={course.enrolled ? 'Toque para marcar ou desmarcar como concluída' : 'Inscreva-se para acompanhar as aulas'}
@@ -125,4 +126,5 @@ const styles = StyleSheet.create({
   lessonDone: { textDecorationLine: 'line-through', color: colors.textMuted },
   lessonMeta: { fontFamily: fonts.regular, fontSize: 12, color: colors.textMuted, marginTop: 2 },
   hint: { fontFamily: fonts.regular, fontSize: 12, color: colors.textMuted, marginTop: 4 },
+  error: { fontFamily: fonts.medium, fontSize: 13, color: colors.error, marginTop: 10 },
 });

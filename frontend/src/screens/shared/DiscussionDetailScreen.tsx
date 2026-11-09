@@ -34,24 +34,27 @@ export function DiscussionDetailScreen({ navigation, route }: Props) {
     );
   }
 
-  function handleReply() {
+  async function handleReply() {
     const message = validateReply(text);
     setError(message);
     if (message || !discussion) return;
-    actions.addReply(discussion.id, {
+    try { await actions.addReply(discussion.id, {
       id: newId('r'),
       author: user.name,
       body: text.trim(),
       createdAt: new Date().toISOString(),
-    });
-    setText('');
+    }); setText(''); } catch { setError('Não foi possível publicar. Confira a conexão com a API.'); }
   }
 
   function handleRemove() {
     if (!discussion) return;
-    confirmAction('Remover discussão', `Remover "${discussion.title}" e todas as respostas?`, 'Remover', () => {
-      actions.removeDiscussion(discussion.id);
-      navigation.goBack();
+    confirmAction('Remover discussão', `Remover "${discussion.title}" e todas as respostas?`, 'Remover', async () => {
+      try {
+        await actions.removeDiscussion(discussion.id);
+        navigation.goBack();
+      } catch {
+        setError('Não foi possível remover a discussão. Confira a conexão com a API.');
+      }
     });
   }
 

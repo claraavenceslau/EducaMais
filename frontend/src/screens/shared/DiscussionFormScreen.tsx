@@ -23,12 +23,12 @@ export function DiscussionFormScreen({ navigation }: Props) {
   const [errors, setErrors] = useState<{ title?: string; body?: string }>({});
   const bodyRef = useRef<TextInputInstance>(null);
 
-  function handleSave() {
+  async function handleSave() {
     const next = { title: validateDiscussionTitle(title), body: validateBody(body) };
     setErrors(next);
     if (next.title || next.body) return;
 
-    actions.addDiscussion({
+    try { await actions.addDiscussion({
       id: newId('d'),
       author: user.name,
       title: title.trim(),
@@ -36,8 +36,7 @@ export function DiscussionFormScreen({ navigation }: Props) {
       subject: subject.trim() || 'Geral',
       createdAt: new Date().toISOString(),
       replies: [],
-    });
-    navigation.goBack();
+    }); navigation.goBack(); } catch { setErrors({ body: 'Não foi possível publicar. Confira a conexão com a API.' }); }
   }
 
   return (

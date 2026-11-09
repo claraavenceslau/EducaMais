@@ -33,9 +33,9 @@ export function CommunityScreen() {
   const items = sortDiscussions(data.discussions, sort);
 
   function askRemove(id: string, title: string) {
-    confirmAction('Remover discussão', `Remover "${title}" e todas as respostas?`, 'Remover', () =>
-      actions.removeDiscussion(id),
-    );
+    confirmAction('Remover discussão', `Remover "${title}" e todas as respostas?`, 'Remover', async () => {
+      try { await actions.removeDiscussion(id); } catch { reload(); }
+    });
   }
 
   return (

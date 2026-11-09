@@ -14,3 +14,11 @@ export const requireAuth: RequestHandler = (req, _res, next) => {
     next(error);
   }
 };
+
+export function requireRole(role: "STUDENT" | "TEACHER"): RequestHandler {
+  return (req, _res, next) => {
+    if (!req.auth) return next(new AppError(401, "AUTHENTICATION_REQUIRED", "Faça login para continuar."));
+    if (req.auth.role !== role) return next(new AppError(403, "ROLE_FORBIDDEN", "Seu perfil não pode realizar esta ação."));
+    next();
+  };
+}

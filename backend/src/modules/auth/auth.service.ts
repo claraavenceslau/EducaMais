@@ -55,8 +55,18 @@ export const authService = {
   },
 
   async requestPasswordReset(email: string) {
+    if (!exposePasswordResetToken()) {
+      throw new AppError(
+        503,
+        "PASSWORD_RESET_EMAIL_NOT_CONFIGURED",
+        "O envio de e-mail para recuperação de senha ainda não está configurado.",
+      );
+    }
+
     const user = await authRepository.findUserByEmail(email);
-    if (!user) return { resetToken: undefined };
+    if (!user) {
+      throw new AppError(404, "ACCOUNT_NOT_FOUND", "Não encontramos uma conta com esse e-mail.");
+    }
 
     const resetToken = randomBytes(32).toString("hex");
     const tokenHash = hashResetToken(resetToken);
@@ -70,8 +80,8 @@ export const authService = {
       prisma.passwordReset.create({ data: { userId: user.id, tokenHash, expiresAt } }),
     ]);
 
-    // Email delivery is not configured yet. This guarded path is for local development only.
-    return { resetToken: exposePasswordResetToken() ? resetToken : undefined };
+    // A real email provider is not configured. The token is returned only in local development.
+    return { resetToken };
   },
 
   async resetPassword(token: string, newPassword: string) {

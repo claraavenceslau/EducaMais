@@ -16,11 +16,13 @@ export class AuthApiError extends Error {
 export class InvalidCredentialsError extends Error {}
 export class EmailAlreadyRegisteredError extends Error {}
 export class PasswordResetUnavailableError extends Error {}
+export class AccountNotFoundError extends Error {}
 
 export interface AuthService {
   signIn(credentials: Credentials): Promise<User>;
   signUp(data: SignUpData): Promise<User>;
-  requestPasswordReset(email: string): Promise<void>;
+  requestPasswordReset(email: string): Promise<{ resetToken: string }>;
+  resetPassword(token: string, password: string): Promise<void>;
   restoreSession(): Promise<User | null>;
   clearSession(): Promise<void>;
 }
@@ -30,6 +32,7 @@ const TOKEN_KEY = 'educamais.access-token';
 let webToken: string | null = null;
 
 type AuthResponse = { user: User; token: string };
+type PasswordResetResponse = { resetToken: string };
 type ErrorResponse = { error?: { code?: string; message?: string } };
 
 async function readToken(): Promise<string | null> {
@@ -79,6 +82,10 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
   return body;
 }
 
+export async function authenticatedRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  return request<T>(path, init, (await readToken()) ?? undefined);
+}
+
 async function authenticate(path: '/auth/login' | '/auth/register', data: Credentials | SignUpData): Promise<User> {
   const result = await request<AuthResponse>(path, { method: 'POST', body: JSON.stringify(data) });
   await saveToken(result.token);
@@ -113,9 +120,29 @@ export const authService: AuthService & {
     }
   },
 
-  async requestPasswordReset(_email) {
-    // A real delivery provider and reset-link screen are still required.
-    throw new PasswordResetUnavailableError();
+  async requestPasswordReset(email) {
+    try {
+      const result = await request<PasswordResetResponse>('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      return { resetToken: result.resetToken };
+    } catch (error) {
+      if (error instanceof AuthApiError && error.code === 'PASSWORD_RESET_EMAIL_NOT_CONFIGURED') {
+        throw new PasswordResetUnavailableError();
+      }
+      if (error instanceof AuthApiError && error.code === 'ACCOUNT_NOT_FOUND') {
+        throw new AccountNotFoundError();
+      }
+      throw error;
+    }
+  },
+
+  async resetPassword(token, password) {
+    await request<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    });
   },
 
   async restoreSession() {

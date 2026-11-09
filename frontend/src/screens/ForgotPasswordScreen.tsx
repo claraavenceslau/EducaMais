@@ -8,9 +8,13 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Button } from '../components/Button';
 import { TextField } from '../components/TextField';
 import type { AuthStackParamList } from '../navigation/types';
-import { authService, PasswordResetUnavailableError } from '../services/authService';
+import {
+  AccountNotFoundError, AuthApiError, authService, PasswordResetUnavailableError,
+} from '../services/authService';
 import { colors, fonts } from '../theme';
-import { validateEmail } from '../utils/validation';
+import {
+  validateConfirmPassword, validateEmail, validateNewPassword,
+} from '../utils/validation';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
@@ -19,7 +23,12 @@ export function ForgotPasswordScreen({ navigation }: Props) {
   const [error, setError] = useState<string>();
   const [formError, setFormError] = useState<string>();
   const [loading, setLoading] = useState(false);
-  const [sentTo, setSentTo] = useState<string>();
+  const [resetToken, setResetToken] = useState<string>();
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string>();
+  const [confirmError, setConfirmError] = useState<string>();
+  const [resetComplete, setResetComplete] = useState(false);
 
   async function handleSend() {
     if (loading) return;
@@ -31,12 +40,36 @@ export function ForgotPasswordScreen({ navigation }: Props) {
     setLoading(true);
     try {
       const target = email.trim();
-      await authService.requestPasswordReset(target);
-      setSentTo(target);
-    } catch (error) {
-      setFormError(error instanceof PasswordResetUnavailableError
-        ? 'A recuperação por e-mail ainda não foi configurada. Você pode criar uma conta e fazer login normalmente.'
-        : 'Não foi possível enviar o link agora. Tente novamente em instantes.');
+      const result = await authService.requestPasswordReset(target);
+      setResetToken(result.resetToken);
+    } catch (requestError) {
+      setFormError(requestError instanceof AccountNotFoundError
+        ? 'Não encontramos uma conta com esse e-mail.'
+        : requestError instanceof PasswordResetUnavailableError
+          ? 'O envio de e-mail ainda não foi configurado. No ambiente local, habilite EXPOSE_PASSWORD_RESET_TOKEN no backend.'
+          : 'Não foi possível iniciar a recuperação. Confira a conexão com a API e tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleReset() {
+    if (loading || !resetToken) return;
+    const nextPasswordError = validateNewPassword(password);
+    const nextConfirmError = validateConfirmPassword(confirmPassword, password);
+    setPasswordError(nextPasswordError);
+    setConfirmError(nextConfirmError);
+    setFormError(undefined);
+    if (nextPasswordError || nextConfirmError) return;
+
+    setLoading(true);
+    try {
+      await authService.resetPassword(resetToken, password);
+      setResetComplete(true);
+    } catch (resetError) {
+      setFormError(resetError instanceof AuthApiError && resetError.code === 'INVALID_RESET_TOKEN'
+        ? 'O código expirou ou já foi usado. Inicie a recuperação novamente.'
+        : 'Não foi possível atualizar a senha. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -53,28 +86,54 @@ export function ForgotPasswordScreen({ navigation }: Props) {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.container}>
-            {sentTo ? (
+            {resetComplete ? (
               <>
-                <Ionicons name="mail-outline" size={56} color={colors.primary} style={styles.center} />
+                <Ionicons name="checkmark-circle" size={56} color={colors.success} style={styles.center} />
                 <Text style={[styles.title, styles.centerText]} accessibilityRole="header">
-                  Verifique seu e-mail
+                  Senha atualizada
                 </Text>
-                {/* Mensagem genérica: não revela se a conta existe */}
                 <Text style={[styles.subtitle, styles.centerText]}>
-                  Se existir uma conta com o e-mail {sentTo}, enviamos um link para redefinir sua senha.
-                  Confira também a caixa de spam.
+                  Agora você pode entrar com sua nova senha.
                 </Text>
+                <Button title="Voltar ao login" onPress={() => navigation.navigate('Login')} />
+              </>
+            ) : resetToken ? (
+              <>
+                <Text style={styles.title} accessibilityRole="header">Criar nova senha</Text>
+                <Text style={styles.subtitle}>
+                  Defina uma nova senha para sua conta. Este código local é válido por uma hora e só pode ser usado uma vez.
+                </Text>
+                <TextField
+                  label="Nova senha"
+                  placeholder="Crie uma senha"
+                  value={password}
+                  onChangeText={setPassword}
+                  error={passwordError}
+                  isPassword
+                  autoCapitalize="none"
+                  textContentType="newPassword"
+                  returnKeyType="next"
+                />
+                <TextField
+                  label="Confirmar nova senha"
+                  placeholder="Repita a nova senha"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  error={confirmError}
+                  isPassword
+                  autoCapitalize="none"
+                  textContentType="newPassword"
+                  returnKeyType="done"
+                  onSubmitEditing={handleReset}
+                />
                 {formErrorBox}
-                <View style={styles.actions}>
-                  <Button title="Voltar ao login" onPress={() => navigation.navigate('Login')} />
-                  <Button title="Reenviar link" variant="secondary" onPress={handleSend} loading={loading} />
-                </View>
+                <Button title="Salvar nova senha" onPress={handleReset} loading={loading} />
               </>
             ) : (
               <>
                 <Text style={styles.title} accessibilityRole="header">Esqueceu a senha?</Text>
                 <Text style={styles.subtitle}>
-                  Informe o e-mail da sua conta e enviaremos um link para redefinir sua senha.
+                  Informe o e-mail cadastrado. No ambiente local, a API gera um código temporário para você definir outra senha.
                 </Text>
                 <TextField
                   label="E-mail"

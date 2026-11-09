@@ -25,8 +25,8 @@ router.post("/forgot-password", async (req, res) => {
   const { email } = forgotPasswordSchema.parse(req.body);
   const result = await authService.requestPasswordReset(email);
   res.status(202).json({
-    message: "Se este e-mail estiver cadastrado, você receberá instruções para redefinir a senha.",
-    ...(result.resetToken ? { resetToken: result.resetToken } : {}),
+    message: "Token de recuperação local gerado. Ele expira em uma hora.",
+    resetToken: result.resetToken,
   });
 });
 

@@ -10,7 +10,6 @@ import type { MainStackParamList } from '../../navigation/types';
 import { colors, fonts } from '../../theme';
 import type { Task } from '../../types';
 import { addDays, isoToBr, maskBrDate, parseBrDate } from '../../utils/dates';
-import { newId } from '../../utils/id';
 import { isPastDue, validateDueDate, validateTaskTitle } from '../../utils/validation';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'TaskForm'>;
@@ -26,6 +25,8 @@ export function TaskFormScreen({ navigation, route }: Props) {
   const [subject, setSubject] = useState(existing?.subject ?? '');
   const [due, setDue] = useState(isoToBr(existing?.dueDate ?? addDays(new Date(), 1)));
   const [done, setDone] = useState(existing?.done ?? false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string>();
   const [errors, setErrors] = useState<{ title?: string; due?: string }>({});
   const descRef = useRef<TextInputInstance>(null);
   const subjectRef = useRef<TextInputInstance>(null);
@@ -41,21 +42,30 @@ export function TaskFormScreen({ navigation, route }: Props) {
     );
   }
 
-  function handleSave() {
+  async function handleSave() {
+    if (saving) return;
     const next = { title: validateTaskTitle(title), due: validateDueDate(due) };
     setErrors(next);
+    setSaveError(undefined);
     if (next.title || next.due) return;
 
     const task: Task = {
-      id: existing?.id ?? newId('t'),
+      id: existing?.id ?? '',
       title: title.trim(),
       description: description.trim(),
       subject: subject.trim(),
       dueDate: parseBrDate(due)!, // a validação acima garante que a data existe
       done,
     };
-    actions.saveTask(task);
-    navigation.goBack();
+    setSaving(true);
+    try {
+      await actions.saveTask(task);
+      navigation.goBack();
+    } catch {
+      setSaveError('A tarefa não foi salva. Verifique se a API está conectada e tente novamente.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   const pastDue = !errors.due && isPastDue(due, new Date()) && !done;
@@ -116,9 +126,11 @@ export function TaskFormScreen({ navigation, route }: Props) {
           </View>
         )}
 
+        {!!saveError && <Text style={styles.saveError} accessibilityRole="alert">{saveError}</Text>}
+
         <View style={styles.actions}>
-          <View style={{ flex: 1 }}><Button title="Cancelar" variant="secondary" onPress={() => navigation.goBack()} /></View>
-          <View style={{ flex: 1 }}><Button title="Salvar" onPress={handleSave} /></View>
+          <View style={{ flex: 1 }}><Button title="Cancelar" variant="secondary" disabled={saving} onPress={() => navigation.goBack()} /></View>
+          <View style={{ flex: 1 }}><Button title="Salvar" loading={saving} onPress={handleSave} /></View>
         </View>
       </KeyboardAvoidingView>
     </Screen>
@@ -130,4 +142,5 @@ const styles = StyleSheet.create({
   status: { marginBottom: 16 },
   statusLabel: { fontFamily: fonts.semibold, fontSize: 13, color: colors.text, marginBottom: 6 },
   actions: { flexDirection: 'row', gap: 12, marginTop: 8 },
+  saveError: { fontFamily: fonts.medium, fontSize: 13, color: colors.error, marginBottom: 12 },
 });

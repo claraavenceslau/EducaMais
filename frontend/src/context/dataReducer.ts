@@ -9,6 +9,7 @@ export type DataAction =
   | { type: 'course/toggleLesson'; courseId: string; lessonId: string }
   | { type: 'course/save'; course: Course }
   | { type: 'discussion/add'; discussion: Discussion }
+  | { type: 'discussion/save'; discussion: Discussion }
   | { type: 'discussion/remove'; id: string }
   | { type: 'reply/add'; discussionId: string; reply: Reply };
 
@@ -56,6 +57,8 @@ export function reduceData(state: AppData, action: DataAction): AppData {
 
     case 'discussion/add':
       return { ...state, discussions: [action.discussion, ...state.discussions] };
+    case 'discussion/save':
+      return { ...state, discussions: upsert(state.discussions, action.discussion) };
     case 'discussion/remove':
       return { ...state, discussions: state.discussions.filter((d) => d.id !== action.id) };
     case 'reply/add':

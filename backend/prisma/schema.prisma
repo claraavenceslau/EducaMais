@@ -17,6 +17,16 @@ enum TaskStatus {
   COMPLETED
 }
 
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum PointSource {
+  TASK
+  LESSON
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   name         String
@@ -30,6 +40,12 @@ model User {
 
   passwordResets PasswordReset[]
   tasks          Task[]
+  coursesTaught  Course[]          @relation("CourseTeacher")
+  enrollments    Enrollment[]
+  lessonProgress LessonProgress[]
+  pointEvents    PointEvent[]
+  discussions    Discussion[]
+  replies        Reply[]
 
   @@map("users")
 }
@@ -77,4 +93,111 @@ model Task {
   @@index([userId, dueDate])
   @@index([subjectId])
   @@map("tasks")
+}
+
+model Course {
+  id          String       @id @default(uuid()) @db.Uuid
+  teacherId   String       @map("teacher_id") @db.Uuid
+  title       String
+  description String
+  theme       String
+  level       String
+  status      CourseStatus @default(DRAFT)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  teacher     User         @relation("CourseTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+  enrollments Enrollment[]
+
+  @@index([teacherId, status])
+  @@map("courses")
+}
+
+model Lesson {
+  id        String           @id @default(uuid()) @db.Uuid
+  courseId  String           @map("course_id") @db.Uuid
+  title     String
+  minutes   Int              @default(10)
+  position  Int              @default(0)
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress  LessonProgress[]
+
+  @@unique([courseId, position])
+  @@map("lessons")
+}
+
+model Enrollment {
+  id         String   @id @default(uuid()) @db.Uuid
+  studentId  String   @map("student_id") @db.Uuid
+  courseId   String   @map("course_id") @db.Uuid
+  enrolledAt DateTime @default(now()) @map("enrolled_at")
+
+  student User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId])
+  @@index([studentId])
+  @@map("enrollments")
+}
+
+model LessonProgress {
+  id          String    @id @default(uuid()) @db.Uuid
+  studentId   String    @map("student_id") @db.Uuid
+  lessonId    String    @map("lesson_id") @db.Uuid
+  completedAt DateTime? @map("completed_at")
+
+  student User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lesson  Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, studentId])
+  @@index([studentId])
+  @@map("lesson_progress")
+}
+
+model PointEvent {
+  id         String      @id @default(uuid()) @db.Uuid
+  userId     String      @map("user_id") @db.Uuid
+  source     PointSource
+  sourceId   String      @map("source_id") @db.Uuid
+  points     Int
+  createdAt  DateTime    @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, source, sourceId])
+  @@index([userId, createdAt])
+  @@map("point_events")
+}
+
+model Discussion {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String
+  body      String
+  subject   String   @default("Geral")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replies Reply[]
+
+  @@index([createdAt])
+  @@map("discussions")
+}
+
+model Reply {
+  id           String   @id @default(uuid()) @db.Uuid
+  discussionId String   @map("discussion_id") @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  body         String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  discussion Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([discussionId, createdAt])
+  @@map("replies")
 }

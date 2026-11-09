@@ -26,7 +26,7 @@ const EMPTY: Record<TaskFilter, { title: string; message: string }> = {
 
 export function TasksScreen() {
   const nav = useMainNavigation();
-  const { status, data, actions, reload } = useData();
+  const { status, data, actions, reload, mutationError } = useData();
   const [filter, setFilter] = useState<TaskFilter>('todas');
   const now = new Date();
 
@@ -35,7 +35,7 @@ export function TasksScreen() {
 
   function askDelete(id: string, title: string) {
     confirmAction('Excluir tarefa', `Deseja excluir "${title}"? Esta ação não pode ser desfeita.`, 'Excluir', () =>
-      actions.removeTask(id),
+      { void actions.removeTask(id).catch(() => undefined); },
     );
   }
 
@@ -45,6 +45,7 @@ export function TasksScreen() {
 
       <AsyncView status={status} onRetry={reload}>
         <SegmentedTabs options={FILTERS} value={filter} onChange={setFilter} />
+        {!!mutationError && <Text style={styles.mutationError} accessibilityRole="alert">{mutationError}</Text>}
         {overdue > 0 && (
           <Text style={styles.overdue} accessibilityLiveRegion="polite">
             {overdue} {overdue === 1 ? 'tarefa atrasada' : 'tarefas atrasadas'}
@@ -60,7 +61,7 @@ export function TasksScreen() {
                 key={t.id}
                 task={t}
                 now={now}
-                onToggle={() => actions.toggleTask(t.id)}
+                onToggle={() => { void actions.toggleTask(t.id).catch(() => undefined); }}
                 onEdit={() => nav.navigate('TaskForm', { taskId: t.id })}
                 onDelete={() => askDelete(t.id, t.title)}
               />
@@ -75,5 +76,6 @@ export function TasksScreen() {
 const styles = StyleSheet.create({
   title: { fontFamily: fonts.bold, fontSize: 24, color: colors.text, marginBottom: 16 },
   overdue: { fontFamily: fonts.medium, fontSize: 13, color: colors.error, marginTop: 12 },
+  mutationError: { fontFamily: fonts.medium, fontSize: 13, color: colors.error, marginTop: 12 },
   list: { marginTop: 16 },
 });
