@@ -8,9 +8,9 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
+import { AuthProvider } from './src/context/AuthContext';
 import { Navigation } from './src/navigation/AppNavigator';
 
-console.log('Navigation:', typeof Navigation, '| SafeAreaProvider:', typeof SafeAreaProvider, '| StatusBar:', typeof StatusBar);
 export default function App() {
   const [loaded] = useFonts({
     Inter_400Regular,
@@ -30,7 +30,9 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <Navigation />
+      <AuthProvider>
+        <Navigation />
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

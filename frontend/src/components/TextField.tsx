@@ -1,5 +1,7 @@
 import { forwardRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
+import {
+  Pressable, StyleSheet, Text, TextInput, TextInputProps, View, type TextInputInstance,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, fonts, radius } from '../theme';
 
@@ -7,19 +9,21 @@ type Props = TextInputProps & {
   label: string;
   error?: string;
   isPassword?: boolean;
+  hint?: string;
 };
 
-export const TextField = forwardRef<TextInput, Props>(
-  ({ label, error, isPassword, ...rest }, ref) => {
+export const TextField = forwardRef<TextInputInstance, Props>(
+  ({ label, error, isPassword, hint, ...rest }, ref) => {
     const [hidden, setHidden] = useState(true);
+    const multiline = !!rest.multiline;
 
     return (
       <View style={styles.wrapper}>
         <Text style={styles.label}>{label}</Text>
-        <View style={[styles.box, !!error && styles.boxError]}>
+        <View style={[styles.box, multiline && styles.boxMultiline, !!error && styles.boxError]}>
           <TextInput
             ref={ref}
-            style={styles.input}
+            style={[styles.input, multiline && styles.inputMultiline]}
             placeholderTextColor={colors.placeholder}
             accessibilityLabel={label}
             secureTextEntry={isPassword && hidden}
@@ -41,6 +45,7 @@ export const TextField = forwardRef<TextInput, Props>(
             </Pressable>
           )}
         </View>
+        {!!hint && !error && <Text style={styles.hint}>{hint}</Text>}
         {!!error && (
           <Text style={styles.error} accessibilityRole="alert" accessibilityLiveRegion="polite">
             {error}
@@ -64,8 +69,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     paddingHorizontal: 12,
   },
+  boxMultiline: { alignItems: 'flex-start' },
   boxError: { borderColor: colors.error },
   input: { flex: 1, fontFamily: fonts.regular, fontSize: 15, color: colors.text, paddingVertical: 10 },
+  inputMultiline: { minHeight: 96, textAlignVertical: 'top' },
   eye: { padding: 4 },
+  hint: { fontFamily: fonts.regular, fontSize: 12, color: colors.textMuted, marginTop: 4 },
   error: { fontFamily: fonts.regular, fontSize: 12, color: colors.error, marginTop: 4 },
 });
