@@ -17,11 +17,17 @@ enum TaskStatus {
   COMPLETED
 }
 
+enum SubjectLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   name         String
   email        String   @unique
-  password     String 
+  password     String  
   role         Role
   avatarUrl    String?  @map("avatar_url")
   totalPoints  Int      @default(0) @map("total_points")
@@ -30,6 +36,7 @@ model User {
 
   passwordResets PasswordReset[]
   tasks          Task[]
+  subjects       Subject[]
 
   @@map("users")
 }
@@ -49,13 +56,38 @@ model PasswordReset {
 }
 
 model Subject {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String   @unique
-  createdAt DateTime @default(now()) @map("created_at")
+  id           String       @id @default(uuid()) @db.Uuid
+  instructorId String       @map("instructor_id") @db.Uuid
+  name         String       @unique
+  description  String
+  level        SubjectLevel
+  isPublished  Boolean      @default(false) @map("is_published")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
 
-  tasks Task[]
+  instructor User     @relation(fields: [instructorId], references: [id], onDelete: Restrict)
+  tasks      Task[]
+  lessons    Lesson[]
 
+  @@index([instructorId])
+  @@index([isPublished, level])
   @@map("subjects")
+}
+
+model Lesson {
+  id        String   @id @default(uuid()) @db.Uuid
+  subjectId String   @map("subject_id") @db.Uuid
+  title     String
+  content   String
+  position  Int
+  points    Int      @default(10)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([subjectId, position])
+  @@map("lessons")
 }
 
 model Task {
@@ -71,7 +103,7 @@ model Task {
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
 
   @@index([userId, status])
   @@index([userId, dueDate])
