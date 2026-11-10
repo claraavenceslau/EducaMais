@@ -1,8 +1,10 @@
-import { createContext, ReactNode, useContext, useMemo, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { authService } from '../services/authService';
 import type { User } from '../types';
 
 type AuthValue = {
   user: User | null;
+  isRestoring: boolean;
   /** Abre a sessão com o usuário informado (real, quando houver API, ou de demonstração). */
   startSession: (user: User) => void;
   endSession: () => void;
@@ -16,15 +18,25 @@ const AuthContext = createContext<AuthValue | undefined>(undefined);
 // Com API real, guarde o token em armazenamento seguro (expo-secure-store), nunca a senha.
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isRestoring, setIsRestoring] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    authService.restoreSession()
+      .then((restoredUser) => { if (active) setUser(restoredUser); })
+      .catch(() => { if (active) setUser(null); })
+      .finally(() => { if (active) setIsRestoring(false); });
+    return () => { active = false; };
+  }, []);
+
+  const endSession = useCallback(() => {
+    setUser(null);
+    void authService.clearSession();
+  }, []);
 
   const value = useMemo<AuthValue>(
-    () => ({
-      user,
-      startSession: setUser,
-      endSession: () => setUser(null),
-      updateUser: (patch) => setUser((current) => (current ? { ...current, ...patch } : current)),
-    }),
-    [user],
+    () => ({ user, isRestoring, startSession: setUser, endSession }),
+    [user, isRestoring, endSession],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
