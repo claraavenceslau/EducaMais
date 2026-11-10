@@ -8,7 +8,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Button } from '../components/Button';
 import { TextField } from '../components/TextField';
 import type { AuthStackParamList } from '../navigation/types';
-import { authService } from '../services/authService';
+import { authService, PasswordResetUnavailableError } from '../services/authService';
 import { colors, fonts } from '../theme';
 import { validateEmail } from '../utils/validation';
 
@@ -33,8 +33,10 @@ export function ForgotPasswordScreen({ navigation }: Props) {
       const target = email.trim();
       await authService.requestPasswordReset(target);
       setSentTo(target);
-    } catch {
-      setFormError('Não foi possível enviar o link agora. Tente novamente em instantes.');
+    } catch (error) {
+      setFormError(error instanceof PasswordResetUnavailableError
+        ? 'A recuperação por e-mail ainda não foi configurada. Você pode criar uma conta e fazer login normalmente.'
+        : 'Não foi possível enviar o link agora. Tente novamente em instantes.');
     } finally {
       setLoading(false);
     }

@@ -1,4 +1,5 @@
 import "dotenv/config";
+import bcrypt from "bcryptjs";
 import { prisma } from "../src/lib/prisma";
 import { Role, TaskStatus } from "../src/generated/prisma/client";
 
@@ -14,18 +15,18 @@ const SUBJECT_NAMES = [
 
 async function main() {
   // ---- Usuários (semana 2) ----
-  const password = "Senha@123";
+  const password = await bcrypt.hash("Senha@123", 12);
 
   const student = await prisma.user.upsert({
     where: { email: "aluna@educamais.test" },
-    update: {},
-    create: { name: "Ana Aluna", email: "aluna@educamais.test", role: Role.STUDENT, password},
+    update: { password },
+    create: { name: "Ana Aluna", email: "aluna@educamais.test", role: Role.STUDENT, password },
   });
 
   await prisma.user.upsert({
     where: { email: "professor@educamais.test" },
-    update: {},
-    create: { name: "Carlos Professor", email: "professor@educamais.test", role: Role.TEACHER, password},
+    update: { password },
+    create: { name: "Carlos Professor", email: "professor@educamais.test", role: Role.TEACHER, password },
   });
 
   // ---- Matérias (semana 3) ----

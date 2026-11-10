@@ -9,7 +9,7 @@ import { Logo } from '../components/Logo';
 import { TextField } from '../components/TextField';
 import { useAuth } from '../context/AuthContext';
 import type { AuthStackParamList } from '../navigation/types';
-import { authService, type AccountRole } from '../services/authService';
+import { authService, AuthApiError, InvalidCredentialsError, type AccountRole } from '../services/authService';
 import { colors, fonts } from '../theme';
 import { validateEmail, validatePassword } from '../utils/validation';
 
@@ -39,9 +39,13 @@ export function LoginScreen({ navigation }: Props) {
     } catch (e) {
       const notConfigured = e instanceof Error && e.message === 'AUTH_NOT_CONFIGURED';
       setFormError(
-        notConfigured
+        e instanceof InvalidCredentialsError
+          ? 'E-mail ou senha incorretos.'
+          : notConfigured
           ? 'O servidor de login ainda não está disponível. Use o modo de demonstração abaixo para explorar o app.'
-          : 'E-mail ou senha incorretos.',
+          : e instanceof AuthApiError && e.code === 'API_UNAVAILABLE'
+            ? 'Não foi possível conectar à API. Confira se o servidor está rodando e se a URL está correta.'
+            : 'Não foi possível entrar agora. Tente novamente em instantes.',
       );
     } finally {
       setLoading(false);
