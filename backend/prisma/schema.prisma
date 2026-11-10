@@ -23,20 +23,29 @@ enum SubjectLevel {
   ADVANCED
 }
 
+enum PointSource {
+  LESSON
+  CHALLENGE
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   name         String
   email        String   @unique
-  password     String  
+  password      String   
   role         Role
   avatarUrl    String?  @map("avatar_url")
   totalPoints  Int      @default(0) @map("total_points")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  passwordResets PasswordReset[]
-  tasks          Task[]
-  subjects       Subject[]
+  passwordResets       PasswordReset[]
+  tasks                Task[]
+  subjects             Subject[]
+  enrollments          Enrollment[]
+  lessonProgress       LessonProgress[]
+  challengeCompletions ChallengeCompletion[]
+  pointTransactions    PointTransaction[]
 
   @@map("users")
 }
@@ -65,9 +74,11 @@ model Subject {
   createdAt    DateTime     @default(now()) @map("created_at")
   updatedAt    DateTime     @updatedAt @map("updated_at")
 
-  instructor User     @relation(fields: [instructorId], references: [id], onDelete: Restrict)
-  tasks      Task[]
-  lessons    Lesson[]
+  instructor  User         @relation(fields: [instructorId], references: [id], onDelete: Restrict)
+  tasks       Task[]
+  lessons     Lesson[]
+  enrollments Enrollment[]
+  challenges  Challenge[]
 
   @@index([instructorId])
   @@index([isPublished, level])
@@ -84,7 +95,9 @@ model Lesson {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subject           Subject            @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  progress          LessonProgress[]
+  pointTransactions PointTransaction[]
 
   @@unique([subjectId, position])
   @@map("lessons")
@@ -109,4 +122,81 @@ model Task {
   @@index([userId, dueDate])
   @@index([subjectId])
   @@map("tasks")
+}
+
+model Enrollment {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  subjectId  String   @map("subject_id") @db.Uuid
+  enrolledAt DateTime @default(now()) @map("enrolled_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subjectId])
+  @@index([subjectId])
+  @@map("enrollments")
+}
+
+model LessonProgress {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  lessonId    String   @map("lesson_id") @db.Uuid
+  completedAt DateTime @default(now()) @map("completed_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([lessonId])
+  @@map("lesson_progress")
+}
+
+model Challenge {
+  id          String   @id @default(uuid()) @db.Uuid
+  subjectId   String?  @map("subject_id") @db.Uuid
+  title       String
+  description String
+  points      Int
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  subject           Subject?              @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  completions       ChallengeCompletion[]
+  pointTransactions PointTransaction[]
+
+  @@index([subjectId])
+  @@map("challenges")
+}
+
+model ChallengeCompletion {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  challengeId String   @map("challenge_id") @db.Uuid
+  completedAt DateTime @default(now()) @map("completed_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+  @@index([challengeId])
+  @@map("challenge_completions")
+}
+
+model PointTransaction {
+  id          String      @id @default(uuid()) @db.Uuid
+  userId      String      @map("user_id") @db.Uuid
+  points      Int
+  source      PointSource
+  lessonId    String?     @map("lesson_id") @db.Uuid
+  challengeId String?     @map("challenge_id") @db.Uuid
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson    Lesson?    @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  challenge Challenge? @relation(fields: [challengeId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, lessonId])
+  @@unique([userId, challengeId])
+  @@index([userId, createdAt])
+  @@map("point_transactions")
 }
