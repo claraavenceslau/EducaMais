@@ -10,7 +10,7 @@ import { RoleSelector } from '../components/RoleSelector';
 import { TextField } from '../components/TextField';
 import { useAuth } from '../context/AuthContext';
 import type { AuthStackParamList } from '../navigation/types';
-import { authService, type AccountRole } from '../services/authService';
+import { authService, EmailAlreadyRegisteredError, type AccountRole } from '../services/authService';
 import type { User } from '../types';
 import { colors, fonts } from '../theme';
 import {
@@ -62,8 +62,10 @@ export function SignUpScreen({ navigation }: Props) {
     try {
       const user = await authService.signUp({ role, name: name.trim(), email: email.trim(), password });
       setCreatedUser(user);
-    } catch {
-      setFormError('Não foi possível criar a conta agora. Tente novamente em instantes.');
+    } catch (error) {
+      setFormError(error instanceof EmailAlreadyRegisteredError
+        ? 'Este e-mail já está cadastrado. Entre na sua conta ou use outro e-mail.'
+        : 'Não foi possível criar a conta. Confira a conexão com a API e tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -79,13 +81,10 @@ export function SignUpScreen({ navigation }: Props) {
                 <Ionicons name="checkmark-circle" size={56} color={colors.success} style={styles.center} />
                 <Text style={[styles.title, styles.centerText]} accessibilityRole="header">Conta criada!</Text>
                 <Text style={[styles.subtitle, styles.centerText]}>
-                  Bem-vindo(a), {createdUser.name}. Este cadastro é apenas uma demonstração: nenhum dado foi
-                  enviado ou guardado.
+                  Bem-vindo(a), {createdUser.name}. Sua conta foi criada. Você já pode entrar no Educa+.
                 </Text>
                 <View style={{ gap: 12 }}>
-                  {authService.demoEnabled && (
-                    <Button title="Entrar agora" onPress={() => startSession(createdUser)} />
-                  )}
+                  <Button title="Entrar agora" onPress={() => startSession(createdUser)} />
                   <Button title="Ir para o login" variant="secondary" onPress={() => navigation.navigate('Login')} />
                 </View>
               </>

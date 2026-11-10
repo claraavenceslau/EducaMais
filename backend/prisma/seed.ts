@@ -1,4 +1,5 @@
 import "dotenv/config";
+import bcrypt from "bcryptjs";
 import { prisma } from "../src/lib/prisma";
 import { Role, TaskStatus, SubjectLevel } from "../src/generated/prisma/client";
 
