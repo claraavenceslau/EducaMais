@@ -46,6 +46,9 @@ model User {
   lessonProgress       LessonProgress[]
   challengeCompletions ChallengeCompletion[]
   pointTransactions    PointTransaction[]
+  discussions          Discussion[]
+  comments             Comment[]  
+  reviews SubjectReview[]
 
   @@map("users")
 }
@@ -79,6 +82,8 @@ model Subject {
   lessons     Lesson[]
   enrollments Enrollment[]
   challenges  Challenge[]
+  Discussions Discussion[]
+  reviews    SubjectReview[]
 
   @@index([instructorId])
   @@index([isPublished, level])
@@ -199,4 +204,58 @@ model PointTransaction {
   @@unique([userId, challengeId])
   @@index([userId, createdAt])
   @@map("point_transactions")
+}
+
+model Discussion {
+  id        String   @id @default(uuid()) @db.Uuid
+  authorId  String   @map("author_id") @db.Uuid
+  subjectId String?  @map("subject_id") @db.Uuid // Opcional: pode ser geral ou vinculada a uma matéria
+  title     String
+  content   String
+  isHidden  Boolean  @default(false) @map("is_hidden") // Usado para moderação
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  subject  Subject?  @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  comments Comment[]
+
+  @@index([authorId])
+  @@index([subjectId])
+  @@map("discussions")
+}
+
+model Comment {
+  id           String   @id @default(uuid()) @db.Uuid
+  discussionId String   @map("discussion_id") @db.Uuid
+  authorId     String   @map("author_id") @db.Uuid
+  content      String
+  isHidden     Boolean  @default(false) @map("is_hidden") // Moderação de comentários
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  discussion Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  author     User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([discussionId])
+  @@index([authorId])
+  @@map("comments")
+}
+
+model SubjectReview {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  subjectId String   @map("subject_id") @db.Uuid
+  rating    Int      // Nota de 1 a 5 estrelas
+  comment   String?  // Comentário opcional ou obrigatório do aluno
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  // Um aluno só pode avaliar a mesma matéria/curso 1 vez
+  @@unique([userId, subjectId])
+  @@index([subjectId])
+  @@map("subject_reviews")
 }
