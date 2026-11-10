@@ -52,7 +52,6 @@ export function CourseFormScreen({ navigation, route }: Props) {
       level,
       status,
       teacher: existing?.teacher ?? user.name,
-      rating: existing?.rating ?? 0,
       lessons: existing?.lessons ?? [],
       enrolled: existing?.enrolled ?? false,
       students: existing?.students ?? 0,

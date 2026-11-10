@@ -1,15 +1,27 @@
-import { Share, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { AsyncView } from '../../components/AsyncView';
 import { Button } from '../../components/Button';
 import { CourseHeader } from '../../components/CourseCard';
 import { EmptyState } from '../../components/EmptyState';
 import { Fab } from '../../components/Fab';
 import { Screen } from '../../components/Screen';
+import { RatingText } from '../../components/StarRating';
 import { Tag } from '../../components/Tag';
 import { useData } from '../../context/DataContext';
 import { useMainNavigation } from '../../navigation/hooks';
 import { colors, fonts, radius, shadow } from '../../theme';
 import type { Course } from '../../types';
+import { courseRating } from '../../utils/reviews';
+
+function ReviewsLink({ course, reviews, onOpen }: { course: Course; reviews: import('../../types').Review[]; onOpen: () => void }) {
+  const r = courseRating(reviews, course.id);
+  return (
+    <Pressable onPress={onOpen} accessibilityRole="button" accessibilityLabel={`Ver avaliações de ${course.title}`} style={styles.reviews}>
+      <RatingText average={r.average} count={r.count} />
+      <Text style={styles.reviewsLink}>Ver avaliações</Text>
+    </Pressable>
+  );
+}
 
 export function MyCoursesScreen() {
   const nav = useMainNavigation();
@@ -25,7 +37,7 @@ export function MyCoursesScreen() {
   }
 
   return (
-    <Screen fab={<Fab label="Novo curso" onPress={() => nav.navigate('CourseForm')} />}>
+    <Screen fab={status === 'ready' ? <Fab label="Novo curso" onPress={() => nav.navigate('CourseForm')} /> : undefined}>
       <Text style={styles.title} accessibilityRole="header">Meus cursos</Text>
       <AsyncView status={status} onRetry={reload}>
         <Text style={styles.count}>
@@ -51,6 +63,7 @@ export function MyCoursesScreen() {
                     <Tag label={c.status === 'publicado' ? 'Publicado' : 'Rascunho'} tone={c.status === 'publicado' ? 'success' : 'warn'} />
                   </View>
                   <Text style={styles.meta}>{c.students} alunos · {c.contentCreated}% do conteúdo criado</Text>
+                  <ReviewsLink course={c} onOpen={() => nav.navigate('CourseReviews', { courseId: c.id })} reviews={data.reviews} />
                   <View style={styles.actions}>
                     <View style={{ flex: 1 }}>
                       <Button
@@ -89,5 +102,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 },
   name: { flex: 1, fontFamily: fonts.semibold, fontSize: 15, color: colors.text },
   meta: { fontFamily: fonts.regular, fontSize: 12, color: colors.textMuted },
+  reviews: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 36 },
+  reviewsLink: { fontFamily: fonts.semibold, fontSize: 13, color: colors.primary },
   actions: { flexDirection: 'row', gap: 10, marginTop: 8 },
 });

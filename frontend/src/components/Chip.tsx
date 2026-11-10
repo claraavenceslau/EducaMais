@@ -1,16 +1,17 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { colors, fonts, radius } from '../theme';
 
-type Props = { label: string; selected: boolean; onPress: () => void; accessibilityLabel?: string };
+type Props = { label: string; selected: boolean; onPress: () => void; accessibilityLabel?: string; disabled?: boolean };
 
-export function Chip({ label, selected, onPress, accessibilityLabel }: Props) {
+export function Chip({ label, selected, onPress, accessibilityLabel, disabled }: Props) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ selected }}
-      style={[styles.chip, selected && styles.chipSelected]}
+      accessibilityState={{ selected, disabled: !!disabled }}
+      style={[styles.chip, selected && styles.chipSelected, disabled && { opacity: 0.45 }]}
     >
       <Text style={[styles.text, selected && styles.textSelected]}>{label}</Text>
     </Pressable>

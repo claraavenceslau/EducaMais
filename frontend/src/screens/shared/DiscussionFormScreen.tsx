@@ -6,6 +6,7 @@ import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
 import { useUser } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
+import { useFormDraft } from '../../hooks/useFormDraft';
 import type { MainStackParamList } from '../../navigation/types';
 import { newId } from '../../utils/id';
 import { validateDiscussionTitle, validateRequiredText } from '../../utils/validation';
@@ -23,6 +24,13 @@ export function DiscussionFormScreen({ navigation }: Props) {
   const [errors, setErrors] = useState<{ title?: string; body?: string }>({});
   const bodyRef = useRef<TextInputInstance>(null);
 
+  // Se o app fechar no meio, o texto digitado é recuperado na próxima vez.
+  const draft = useFormDraft('discussion', { title, body, subject }, (d) => {
+    if (d.title) setTitle(d.title);
+    if (d.body) setBody(d.body);
+    if (d.subject) setSubject(d.subject);
+  });
+
   function handleSave() {
     const next = { title: validateDiscussionTitle(title), body: validateBody(body) };
     setErrors(next);
@@ -37,6 +45,7 @@ export function DiscussionFormScreen({ navigation }: Props) {
       createdAt: new Date().toISOString(),
       replies: [],
     });
+    draft.clear();
     navigation.goBack();
   }
 

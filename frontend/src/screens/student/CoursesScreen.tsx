@@ -6,6 +6,7 @@ import { CourseCard } from '../../components/CourseCard';
 import { EmptyState } from '../../components/EmptyState';
 import { Screen } from '../../components/Screen';
 import { SegmentedTabs } from '../../components/SegmentedTabs';
+import { courseRating } from '../../utils/reviews';
 import { useData } from '../../context/DataContext';
 import { useMainNavigation } from '../../navigation/hooks';
 import { colors, fonts, layout } from '../../theme';
@@ -68,7 +69,7 @@ export function CoursesScreen() {
               <View key={i} style={styles.row}>
                 {row.map((c) => (
                   <View key={c.id} style={styles.cell}>
-                    <CourseCard course={c} onPress={() => nav.navigate('CourseDetail', { courseId: c.id })} />
+                    <CourseCard course={c} rating={courseRating(data.reviews, c.id)} onPress={() => nav.navigate('CourseDetail', { courseId: c.id })} />
                   </View>
                 ))}
                 {/* células vazias mantêm a largura das colunas na última linha */}

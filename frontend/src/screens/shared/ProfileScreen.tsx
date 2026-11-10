@@ -3,11 +3,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from '../../components/Avatar';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
+import { NavRow } from '../../components/NavRow';
 import { Screen } from '../../components/Screen';
 import { SectionHeader } from '../../components/SectionHeader';
 import { StatBox } from '../../components/StatBox';
 import { Tag } from '../../components/Tag';
 import { useAuth, useUser } from '../../context/AuthContext';
+import { useMainNavigation } from '../../navigation/hooks';
 import { useData } from '../../context/DataContext';
 import { colors, fonts } from '../../theme';
 import { confirmAction } from '../../utils/confirm';
@@ -22,13 +24,12 @@ const TEACHER_PERMISSIONS = [
   'Ver relatório de alunos',
 ];
 
-// Itens de configuração do protótipo. Ainda não têm função: ficam sinalizados como "Em breve".
-const SETTINGS = ['Editar perfil', 'Notificações', 'Privacidade'];
 
 export function ProfileScreen() {
   const user = useUser();
   const { endSession } = useAuth();
   const { data } = useData();
+  const nav = useMainNavigation();
   const isTeacher = user.role === 'professor';
 
   const stats = isTeacher
@@ -60,6 +61,7 @@ export function ProfileScreen() {
         <Text style={styles.name}>{user.name}</Text>
         <Tag label={isTeacher ? 'Professor' : 'Aluno'} tone={isTeacher ? 'warn' : 'info'} />
         <Text style={styles.email}>{user.email}</Text>
+        {!!data.profile.classGroup && <Text style={styles.email}>{data.profile.classGroup}</Text>}
       </View>
 
       <View style={styles.stats}>
@@ -100,13 +102,10 @@ export function ProfileScreen() {
       )}
 
       <SectionHeader title="Configurações" />
-      <Card style={{ gap: 4 }}>
-        {SETTINGS.map((s) => (
-          <View key={s} style={styles.setting} accessible accessibilityLabel={`${s}, em breve`}>
-            <Text style={styles.permissionText}>{s}</Text>
-            <Text style={styles.soon}>Em breve</Text>
-          </View>
-        ))}
+      <Card style={{ gap: 2 }}>
+        <NavRow title="Editar perfil" icon="create-outline" onPress={() => nav.navigate('EditProfile')} />
+        <NavRow title="Notificações" icon="notifications-outline" onPress={() => nav.navigate('NotificationSettings')} />
+        <NavRow title="Privacidade" icon="lock-closed-outline" onPress={() => nav.navigate('PrivacySettings')} />
       </Card>
 
       <View style={{ marginTop: 20 }}>
@@ -126,6 +125,4 @@ const styles = StyleSheet.create({
   activity: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   points: { fontFamily: fonts.semibold, fontSize: 13, color: colors.successText },
   muted: { fontFamily: fonts.regular, fontSize: 12, color: colors.textMuted },
-  setting: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
-  soon: { fontFamily: fonts.medium, fontSize: 12, color: colors.textMuted },
 });

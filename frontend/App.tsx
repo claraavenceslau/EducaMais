@@ -10,6 +10,9 @@ import {
 } from '@expo-google-fonts/inter';
 import { AuthProvider } from './src/context/AuthContext';
 import { Navigation } from './src/navigation/AppNavigator';
+import { configureNotifications } from './src/services/notifications';
+
+configureNotifications();
 
 export default function App() {
   const [loaded] = useFonts({

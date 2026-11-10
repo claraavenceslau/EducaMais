@@ -6,6 +6,8 @@ type AuthValue = {
   /** Abre a sessão com o usuário informado (real, quando houver API, ou de demonstração). */
   startSession: (user: User) => void;
   endSession: () => void;
+  /** Atualiza dados do usuário já logado (hoje, só o nome). */
+  updateUser: (patch: Partial<Pick<User, 'name'>>) => void;
 };
 
 const AuthContext = createContext<AuthValue | undefined>(undefined);
@@ -16,7 +18,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   const value = useMemo<AuthValue>(
-    () => ({ user, startSession: setUser, endSession: () => setUser(null) }),
+    () => ({
+      user,
+      startSession: setUser,
+      endSession: () => setUser(null),
+      updateUser: (patch) => setUser((current) => (current ? { ...current, ...patch } : current)),
+    }),
     [user],
   );
 

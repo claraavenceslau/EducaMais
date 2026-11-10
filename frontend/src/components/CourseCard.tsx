@@ -4,8 +4,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, fonts, radius, shadow } from '../theme';
 import type { Course } from '../types';
 import { courseProgress, themeBadge, themeTone } from '../utils/selectors';
+import type { RatingSummary } from '../utils/reviews';
 import { Button } from './Button';
 import { ProgressBar } from './ProgressBar';
+import { RatingText } from './StarRating';
 
 type Props = {
   course: Course;
@@ -14,6 +16,8 @@ type Props = {
   footer?: ReactNode;
   /** Mostra a barra de progresso do aluno. */
   showStudentProgress?: boolean;
+  /** Média e total de avaliações do curso (calculados das avaliações). */
+  rating?: RatingSummary;
 };
 
 export function CourseHeader({ course }: { course: Course }) {
@@ -30,7 +34,7 @@ export function CourseHeader({ course }: { course: Course }) {
   );
 }
 
-export function CourseCard({ course, onPress, footer, showStudentProgress = true }: Props) {
+export function CourseCard({ course, onPress, footer, showStudentProgress = true, rating }: Props) {
   const progress = courseProgress(course);
   return (
     <View style={styles.card}>
@@ -38,7 +42,7 @@ export function CourseCard({ course, onPress, footer, showStudentProgress = true
       <View style={styles.body}>
         <Text style={styles.title} numberOfLines={2}>{course.title}</Text>
         <Text style={styles.teacher}>{course.teacher}</Text>
-        {course.rating > 0 && <Text style={styles.rating} accessibilityLabel={`Avaliação ${course.rating}`}>★ {course.rating.toFixed(1)}</Text>}
+        {rating && <View style={styles.rating}><RatingText average={rating.average} count={rating.count} /></View>}
 
         {showStudentProgress && course.enrolled && (
           <View style={styles.progress}>
@@ -69,7 +73,7 @@ const styles = StyleSheet.create({
   body: { padding: 12, flex: 1 },
   title: { fontFamily: fonts.semibold, fontSize: 14, color: colors.text, minHeight: 36 },
   teacher: { fontFamily: fonts.regular, fontSize: 12, color: colors.textMuted, marginTop: 2 },
-  rating: { fontFamily: fonts.medium, fontSize: 12, color: colors.warnText, marginTop: 4 },
+  rating: { marginTop: 4 },
   progress: { marginTop: 10, gap: 4 },
   progressText: { fontFamily: fonts.regular, fontSize: 11, color: colors.textMuted },
   footer: { marginTop: 'auto', paddingTop: 12 },

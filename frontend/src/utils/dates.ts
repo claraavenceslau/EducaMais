@@ -72,3 +72,17 @@ export function timeAgo(isoDateTime: string, now: Date): string {
   if (days === 1) return 'ontem';
   return `${pad(then.getDate())}/${pad(then.getMonth() + 1)}`;
 }
+
+const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+/** "Seg 10/11", para botões de escolha de dia. */
+export function dayChipLabel(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${WEEKDAYS[new Date(y, m - 1, d).getDay()]} ${String(d).padStart(2, '0')}/${String(m).padStart(2, '0')}`;
+}
+
+/** "Seg, 10/11/2026". */
+export function longDate(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${WEEKDAYS[new Date(y, m - 1, d).getDay()]}, ${isoToBr(iso)}`;
+}

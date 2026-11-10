@@ -40,7 +40,7 @@ export function TasksScreen() {
   }
 
   return (
-    <Screen fab={<Fab label="Nova tarefa" onPress={() => nav.navigate('TaskForm')} />}>
+    <Screen fab={status === 'ready' ? <Fab label="Nova tarefa" onPress={() => nav.navigate('TaskForm')} /> : undefined}>
       <Text style={styles.title} accessibilityRole="header">Minhas tarefas</Text>
 
       <AsyncView status={status} onRetry={reload}>

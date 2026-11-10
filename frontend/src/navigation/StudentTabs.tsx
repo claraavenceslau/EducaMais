@@ -1,7 +1,7 @@
 import { useWindowDimensions } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { CommunityScreen } from '../screens/shared/CommunityScreen';
+import { SchoolScreen } from '../screens/school/SchoolScreen';
 import { ProfileScreen } from '../screens/shared/ProfileScreen';
 import { CoursesScreen } from '../screens/student/CoursesScreen';
 import { HomeScreen } from '../screens/student/HomeScreen';
@@ -22,7 +22,7 @@ export function StudentTabs() {
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Início', tabBarIcon: icon('home-outline') }} />
       <Tab.Screen name="Tasks" component={TasksScreen} options={{ title: 'Tarefas', tabBarIcon: icon('checkmark-circle-outline') }} />
       <Tab.Screen name="Courses" component={CoursesScreen} options={{ title: 'Cursos', tabBarIcon: icon('grid-outline') }} />
-      <Tab.Screen name="Community" component={CommunityScreen} options={{ title: 'Comunidade', tabBarIcon: icon('chatbubble-outline') }} />
+      <Tab.Screen name="School" component={SchoolScreen} options={{ title: 'Escola', tabBarIcon: icon('school-outline') }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Perfil', tabBarIcon: icon('person-outline') }} />
     </Tab.Navigator>
   );
