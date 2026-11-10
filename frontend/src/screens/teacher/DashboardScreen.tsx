@@ -9,6 +9,8 @@ import { useUser } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { useMainNavigation } from '../../navigation/hooks';
 import { colors, fonts } from '../../theme';
+import { StarRating } from '../../components/StarRating';
+import { newestFirst, summarize } from '../../utils/reviews';
 import { firstName, teacherStats } from '../../utils/selectors';
 
 export function DashboardScreen() {
@@ -16,6 +18,10 @@ export function DashboardScreen() {
   const user = useUser();
   const { status, data, reload } = useData();
   const stats = teacherStats(data.courses);
+  const ownIds = new Set(data.courses.map((c) => c.id));
+  const ownReviews = data.reviews.filter((r) => ownIds.has(r.courseId));
+  const overall = summarize(ownReviews);
+  const latest = newestFirst(ownReviews).slice(0, 2);
 
   return (
     <Screen>
@@ -42,6 +48,26 @@ export function DashboardScreen() {
           </View>
         </View>
 
+        <SectionHeader title="Avaliações dos alunos" />
+        <Card style={{ gap: 8 }}>
+          {overall.count === 0 ? (
+            <Text style={styles.muted}>Ainda não há avaliações dos seus cursos.</Text>
+          ) : (
+            <>
+              <View style={styles.ratingRow}>
+                <Text style={styles.big}>{overall.average.toFixed(1).replace('.', ',')}</Text>
+                <StarRating value={overall.average} size={18} />
+                <Text style={styles.muted}>{overall.count} avaliações</Text>
+              </View>
+              {latest.map((r) => (
+                <Text key={r.id} style={styles.text}>
+                  {r.authorName}: {r.comment ?? `${r.stars} estrelas`}
+                </Text>
+              ))}
+            </>
+          )}
+        </Card>
+
         <SectionHeader title="Atividade recente" />
         <Card style={{ gap: 12 }}>
           {data.activity.length === 0 ? (
@@ -65,6 +91,8 @@ const styles = StyleSheet.create({
   title: { fontFamily: fonts.bold, fontSize: 24, color: colors.text, marginBottom: 16 },
   stats: { flexDirection: 'row', gap: 10 },
   actions: { flexDirection: 'row', gap: 12, marginTop: 16 },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  big: { fontFamily: fonts.bold, fontSize: 24, color: colors.text },
   text: { fontFamily: fonts.medium, fontSize: 14, color: colors.text },
   muted: { fontFamily: fonts.regular, fontSize: 12, color: colors.textMuted },
 });

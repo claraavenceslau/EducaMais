@@ -2,6 +2,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Button } from '../../components/Button';
+import { ReviewSection } from '../../components/ReviewSection';
+import { RatingText } from '../../components/StarRating';
 import { Card } from '../../components/Card';
 import { CourseHeader } from '../../components/CourseCard';
 import { ProgressBar } from '../../components/ProgressBar';
@@ -10,6 +12,7 @@ import { Tag } from '../../components/Tag';
 import { useData } from '../../context/DataContext';
 import type { MainStackParamList } from '../../navigation/types';
 import { colors, fonts, radius } from '../../theme';
+import { courseRating } from '../../utils/reviews';
 import { courseProgress } from '../../utils/selectors';
 
 type Props = NativeStackScreenProps<MainStackParamList, 'CourseDetail'>;
@@ -28,6 +31,7 @@ export function CourseDetailScreen({ navigation, route }: Props) {
   }
 
   const progress = courseProgress(course);
+  const rating = courseRating(data.reviews, course.id);
   const doneCount = course.lessons.filter((l) => l.done).length;
 
   return (
@@ -37,7 +41,8 @@ export function CourseDetailScreen({ navigation, route }: Props) {
       </View>
 
       <Text style={styles.title} accessibilityRole="header">{course.title}</Text>
-      <Text style={styles.teacher}>{course.teacher}{course.rating > 0 ? ` · ★ ${course.rating.toFixed(1)}` : ''}</Text>
+      <Text style={styles.teacher}>{course.teacher}</Text>
+      <View style={styles.rating}><RatingText average={rating.average} count={rating.count} /></View>
       <View style={styles.tags}>
         <Tag label={course.theme} />
         <Tag label={course.level} tone="neutral" />
@@ -84,6 +89,8 @@ export function CourseDetailScreen({ navigation, route }: Props) {
       {!course.enrolled && course.lessons.length > 0 && (
         <Text style={styles.hint}>Inscreva-se para marcar aulas como concluídas.</Text>
       )}
+
+      <ReviewSection course={course} />
     </Screen>
   );
 }
@@ -92,6 +99,7 @@ const styles = StyleSheet.create({
   notFound: { fontFamily: fonts.regular, fontSize: 15, color: colors.textMuted, marginBottom: 16 },
   hero: { borderRadius: radius.lg, overflow: 'hidden', marginBottom: 16 },
   title: { fontFamily: fonts.bold, fontSize: 22, color: colors.text },
+  rating: { marginTop: 4 },
   teacher: { fontFamily: fonts.regular, fontSize: 14, color: colors.textMuted, marginTop: 4 },
   tags: { flexDirection: 'row', gap: 8, marginTop: 10 },
   description: { fontFamily: fonts.regular, fontSize: 14, color: colors.text, marginTop: 12, lineHeight: 21 },

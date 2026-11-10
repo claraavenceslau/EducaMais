@@ -39,8 +39,7 @@ export function CommunityScreen() {
   }
 
   return (
-    <Screen fab={<Fab label="Nova discussão" onPress={() => nav.navigate('DiscussionForm')} />}>
-      <Text style={styles.title} accessibilityRole="header">{isTeacher ? 'Comunidade' : 'Fórum'}</Text>
+    <Screen edges={['left', 'right', 'bottom']} fab={status === 'ready' ? <Fab label="Nova discussão" onPress={() => nav.navigate('DiscussionForm')} /> : undefined}>
       {isTeacher && (
         <View style={styles.banner}>
           <Tag label="PROFESSOR" tone="warn" />
@@ -81,7 +80,6 @@ export function CommunityScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontFamily: fonts.bold, fontSize: 24, color: colors.text, marginBottom: 12 },
   banner: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
   bannerText: { flex: 1, fontFamily: fonts.regular, fontSize: 13, color: colors.textMuted },
   list: { marginTop: 16 },

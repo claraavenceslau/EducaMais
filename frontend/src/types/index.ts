@@ -36,7 +36,6 @@ export type Course = {
   theme: CourseTheme;
   level: CourseLevel;
   teacher: string;
-  rating: number;
   lessons: Lesson[];
   enrolled: boolean; // visão do aluno
   status: CourseStatus; // visão do professor
@@ -85,6 +84,127 @@ export type Progress = {
   streak: number;
 };
 
+// ---- Avaliações de cursos ----
+export type Stars = 1 | 2 | 3 | 4 | 5;
+
+export type Review = {
+  id: string;
+  courseId: string;
+  studentId: string;
+  authorName: string; // nome mostrado; "Aluno anônimo" quando anonymous = true
+  anonymous: boolean;
+  stars: Stars;
+  comment?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+// ---- Demandas da comunidade escolar ----
+export type DemandCategory =
+  | 'infraestrutura'
+  | 'transporte'
+  | 'alimentacao'
+  | 'seguranca'
+  | 'pedagogico'
+  | 'outros';
+
+export type DemandStatus =
+  | 'aberta'
+  | 'em_analise'
+  | 'em_andamento'
+  | 'resolvida'
+  | 'recusada'
+  | 'cancelada';
+
+export type AttachmentKind = 'image' | 'document';
+
+export type Attachment = {
+  id: string;
+  kind: AttachmentKind;
+  name: string;
+  uri: string;
+  mimeType?: string;
+  sizeBytes?: number;
+};
+
+export type DemandLocation = {
+  source: 'gps' | 'manual';
+  description: string; // endereço ou ponto de referência, sempre preenchido
+  latitude?: number;
+  longitude?: number;
+  accuracy?: number; // metros
+};
+
+export type DemandEvent = {
+  id: string;
+  status: DemandStatus;
+  text: string;
+  at: string;
+};
+
+export type Demand = {
+  id: string;
+  protocol: string; // AAAA-NNNN, mostrado ao usuário
+  category: DemandCategory;
+  title: string;
+  description: string;
+  status: DemandStatus;
+  createdAt: string;
+  updatedAt: string;
+  attachments: Attachment[];
+  location?: DemandLocation;
+  timeline: DemandEvent[];
+  seiProcess?: string; // número do processo no SEI, preenchido pela integração (futuro)
+};
+
+// ---- Avisos ----
+export type NoticeCategory = 'geral' | 'urgente' | 'evento' | 'pedagogico';
+
+export type Notice = {
+  id: string;
+  title: string;
+  body: string;
+  category: NoticeCategory;
+  publishedAt: string;
+  author: string;
+  read: boolean;
+};
+
+// ---- Agendamento de atendimentos ----
+export type ServiceKey = 'secretaria' | 'coordenacao' | 'direcao' | 'orientacao';
+export type AppointmentStatus = 'agendado' | 'cancelado' | 'concluido';
+
+export type Appointment = {
+  id: string;
+  service: ServiceKey;
+  date: string; // AAAA-MM-DD
+  time: string; // HH:MM
+  reason: string;
+  status: AppointmentStatus;
+  createdAt: string;
+  reminderId?: string; // id da notificação local de lembrete
+};
+
+// ---- Preferências e perfil ----
+export type Preferences = {
+  notifications: { notices: boolean; demands: boolean; appointments: boolean; tasks: boolean };
+  privacy: {
+    shareLocationByDefault: boolean;
+    reviewIdentity: 'nome' | 'anonimo';
+  };
+};
+
+export type Profile = {
+  name?: string;
+  phone?: string;
+  classGroup?: string; // turma (aluno) ou disciplinas (professor)
+};
+
+export const DEFAULT_PREFERENCES: Preferences = {
+  notifications: { notices: true, demands: true, appointments: true, tasks: false },
+  privacy: { shareLocationByDefault: false, reviewIdentity: 'nome' },
+};
+
 export type AppData = {
   tasks: Task[];
   courses: Course[];
@@ -93,6 +213,12 @@ export type AppData = {
   ranking: RankingEntry[];
   activity: ActivityItem[];
   progress: Progress;
+  reviews: Review[];
+  demands: Demand[];
+  notices: Notice[];
+  appointments: Appointment[];
+  preferences: Preferences;
+  profile: Profile;
 };
 
 export const EMPTY_DATA: AppData = {
@@ -103,4 +229,10 @@ export const EMPTY_DATA: AppData = {
   ranking: [],
   activity: [],
   progress: { points: 0, level: 1, xp: 0, xpNext: 100, streak: 0 },
+  reviews: [],
+  demands: [],
+  notices: [],
+  appointments: [],
+  preferences: DEFAULT_PREFERENCES,
+  profile: {},
 };

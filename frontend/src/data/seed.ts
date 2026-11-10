@@ -1,4 +1,5 @@
-import type { AppData, Course, Discussion, Lesson, User } from '../types';
+import { DEFAULT_PREFERENCES } from '../types';
+import type { AppData, Course, Demand, Discussion, Lesson, Notice, Review, Stars, User } from '../types';
 import { addDays } from '../utils/dates';
 
 // Dados de demonstração inspirados nos protótipos (Ana Souza, Rafael Mendes,
@@ -48,29 +49,136 @@ function discussions(now: Date): Discussion[] {
   ];
 }
 
+
+const REVIEWERS = [
+  'Ana Souza', 'Rafael Mendes', 'Bruna Lima', 'Diego Alves', 'Camila Rocha',
+  'Lucas Prado', 'Julia Nunes', 'Pedro Matos', 'Sofia Dias', 'Tiago Reis',
+];
+
+const COMMENTS: Record<number, string> = {
+  0: 'Conteúdo claro e bem organizado.',
+  2: 'As aulas práticas ajudaram muito.',
+};
+
+/** Avaliações de outros alunos, só para a demonstração. */
+function fakeReviews(courseId: string, stars: Stars[], now: Date): Review[] {
+  return stars.map((s, i) => {
+    const at = minutesAgo(now, 60 * 24 * (i + 2));
+    return {
+      id: `${courseId}-rv${i + 1}`,
+      courseId,
+      studentId: `fake-${i}`,
+      authorName: REVIEWERS[i % REVIEWERS.length],
+      anonymous: false,
+      stars: s,
+      comment: COMMENTS[i],
+      createdAt: at,
+      updatedAt: at,
+    };
+  });
+}
+
+function demands(now: Date): Demand[] {
+  const day = 60 * 24;
+  return [
+    {
+      id: 'dm1',
+      protocol: `${now.getFullYear()}-0007`,
+      category: 'infraestrutura',
+      title: 'Lâmpadas queimadas no corredor B',
+      description: 'Três lâmpadas do corredor B, no segundo andar, estão queimadas há mais de uma semana e o local fica escuro no fim da tarde.',
+      status: 'em_andamento',
+      createdAt: minutesAgo(now, day * 5),
+      updatedAt: minutesAgo(now, day * 2),
+      attachments: [],
+      location: { source: 'manual', description: 'Corredor B, segundo andar' },
+      seiProcess: '23072.201234/2026-11',
+      timeline: [
+        { id: 'dm1-e1', status: 'aberta', text: 'Demanda registrada.', at: minutesAgo(now, day * 5) },
+        { id: 'dm1-e2', status: 'em_analise', text: 'A equipe da escola começou a analisar.', at: minutesAgo(now, day * 4) },
+        { id: 'dm1-e3', status: 'em_andamento', text: 'Troca das lâmpadas agendada com a manutenção.', at: minutesAgo(now, day * 2) },
+      ],
+    },
+    {
+      id: 'dm2',
+      protocol: `${now.getFullYear()}-0008`,
+      category: 'transporte',
+      title: 'Atraso frequente do ônibus da rota 12',
+      description: 'Nesta semana o ônibus da rota 12 chegou mais de 20 minutos atrasado em três dias seguidos.',
+      status: 'aberta',
+      createdAt: minutesAgo(now, day),
+      updatedAt: minutesAgo(now, day),
+      attachments: [],
+      timeline: [{ id: 'dm2-e1', status: 'aberta', text: 'Demanda registrada.', at: minutesAgo(now, day) }],
+    },
+  ];
+}
+
+function notices(now: Date): Notice[] {
+  const h = 60;
+  return [
+    {
+      id: 'n1', category: 'urgente', author: 'Direção', read: false, publishedAt: minutesAgo(now, h * 3),
+      title: 'Aulas suspensas na sexta-feira',
+      body: 'Por causa de manutenção na rede elétrica, não haverá aula na próxima sexta-feira. As atividades serão repostas no sábado seguinte, em horário a confirmar.',
+    },
+    {
+      id: 'n2', category: 'evento', author: 'Coordenação', read: false, publishedAt: minutesAgo(now, h * 26),
+      title: 'Feira de Ciências abre inscrições',
+      body: 'Os grupos podem inscrever projetos na secretaria até o fim do mês. Cada grupo pode ter de três a cinco estudantes e um professor orientador.',
+    },
+    {
+      id: 'n3', category: 'pedagogico', author: 'Coordenação pedagógica', read: false, publishedAt: minutesAgo(now, h * 50),
+      title: 'Entrega de boletins',
+      body: 'Os boletins do trimestre serão entregues aos responsáveis em reunião, na próxima semana. O horário de cada turma está no mural da secretaria.',
+    },
+    {
+      id: 'n4', category: 'geral', author: 'Secretaria', read: true, publishedAt: minutesAgo(now, h * 24 * 6),
+      title: 'Novo cardápio da merenda',
+      body: 'O cardápio do mês foi atualizado e inclui opções para estudantes com restrições alimentares. Quem precisa de adaptação deve procurar a secretaria.',
+    },
+    {
+      id: 'n5', category: 'geral', author: 'Secretaria', read: true, publishedAt: minutesAgo(now, h * 24 * 12),
+      title: 'Atualização de dados cadastrais',
+      body: 'Pedimos que as famílias confirmem telefone e endereço na secretaria, para que os avisos cheguem corretamente.',
+    },
+  ];
+}
+
+function extras(now: Date, reviews: Review[]) {
+  return {
+    reviews,
+    demands: demands(now),
+    notices: notices(now),
+    appointments: [],
+    preferences: DEFAULT_PREFERENCES,
+    profile: {},
+  };
+}
+
 function studentData(user: User, now: Date): AppData {
   const courses: Course[] = [
     {
       id: 'c1', title: 'Fundamentos de UX/UI', theme: 'Design', level: 'Iniciante',
-      teacher: 'Prof. Mariana Costa', rating: 4.8, enrolled: true, status: 'publicado', students: 0, contentCreated: 100,
+      teacher: 'Prof. Mariana Costa', enrolled: true, status: 'publicado', students: 0, contentCreated: 100,
       description: 'Princípios de experiência do usuário, hierarquia visual e prototipação de interfaces.',
       lessons: lessons('c1', ['O que é UX', 'Pesquisa com usuários', 'Hierarquia visual', 'Prototipação'], 3),
     },
     {
       id: 'c2', title: 'Desenvolvimento Mobile', theme: 'Mobile', level: 'Intermediário',
-      teacher: 'Prof. Carlos Lima', rating: 4.7, enrolled: true, status: 'publicado', students: 0, contentCreated: 100,
+      teacher: 'Prof. Carlos Lima', enrolled: true, status: 'publicado', students: 0, contentCreated: 100,
       description: 'Construção de aplicativos com React Native: navegação, formulários e componentes.',
       lessons: lessons('c2', ['Ambiente e primeiro app', 'Componentes e estilos', 'Navegação'], 1),
     },
     {
       id: 'c3', title: 'Python Avançado', theme: 'Programação', level: 'Avançado',
-      teacher: 'Prof. João Silva', rating: 4.9, enrolled: false, status: 'publicado', students: 0, contentCreated: 100,
+      teacher: 'Prof. João Silva', enrolled: false, status: 'publicado', students: 0, contentCreated: 100,
       description: 'Orientação a objetos, geradores, decoradores e boas práticas de projeto.',
       lessons: lessons('c3', ['Orientação a objetos', 'Geradores', 'Decoradores'], 0),
     },
     {
       id: 'c4', title: 'Análise de Dados', theme: 'Dados', level: 'Intermediário',
-      teacher: 'Prof. Maria Santos', rating: 4.6, enrolled: true, status: 'publicado', students: 0, contentCreated: 100,
+      teacher: 'Prof. Maria Santos', enrolled: true, status: 'publicado', students: 0, contentCreated: 100,
       description: 'Limpeza, exploração e visualização de dados para apoiar decisões.',
       lessons: lessons('c4', ['Introdução a dados', 'Limpeza', 'Exploração', 'Visualização', 'Projeto final'], 1),
     },
@@ -104,12 +212,18 @@ function studentData(user: User, now: Date): AppData {
       { id: 'h3', text: 'Resposta na comunidade', detail: 'Como organizar os estudos?', points: 10 },
     ],
     progress: { points: 250, level: 1, xp: 250, xpNext: 300, streak: 7 },
+    ...extras(now, [
+      ...fakeReviews('c1', [5, 5, 5, 4, 5], now),
+      ...fakeReviews('c2', [5, 5, 4, 5, 4, 5, 5], now),
+      ...fakeReviews('c3', [5, 5, 5, 5, 5, 5, 5, 5, 4, 5], now),
+      ...fakeReviews('c4', [5, 4, 5, 4, 5, 4, 5], now),
+    ]),
   };
 }
 
 function teacherData(user: User, now: Date): AppData {
-  const own = (c: Omit<Course, 'teacher' | 'enrolled' | 'rating'>): Course => ({
-    ...c, teacher: user.name, enrolled: false, rating: 0,
+  const own = (c: Omit<Course, 'teacher' | 'enrolled'>): Course => ({
+    ...c, teacher: user.name, enrolled: false,
   });
   return {
     tasks: [],
@@ -140,6 +254,10 @@ function teacherData(user: User, now: Date): AppData {
       { id: 'r4', text: 'Prototipação Mobile recebeu avaliação 5.0', detail: 'Ontem' },
     ],
     progress: { points: 0, level: 1, xp: 0, xpNext: 100, streak: 0 },
+    ...extras(now, [
+      ...fakeReviews('p1', [5, 5, 4, 5, 5, 4], now),
+      ...fakeReviews('p2', [5, 5, 5], now),
+    ]),
   };
 }
 
