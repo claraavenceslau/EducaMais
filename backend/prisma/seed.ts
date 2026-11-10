@@ -150,7 +150,24 @@ async function main() {
   await completeChallenge(ana.id, challenges["Desafio de estreia"]);
   await completeLesson(bruno.id, (await lessonOf("Desenvolvimento Mobile", 1)).id);
 
-  console.log("Seed concluído: 3 usuários, 4 matérias, 12 aulas, 8 tarefas, matrículas, desafios, progresso e pontos.");
+  // ---- Discussão e Comentário na Comunidade (Semana 6) ----
+  const discussion = await prisma.discussion.create({
+    data: {
+      authorId: ana.id, 
+      title: "Dúvida sobre a matéria de Desenvolvimento Mobile",
+      content: "Alguém pode me ajudar a entender melhor como trabalhar com React Native?",
+    },
+  });
+
+  await prisma.comment.create({
+    data: {
+      discussionId: discussion.id,
+      authorId: teacher.id, // Professor respondendo
+      content: "Claro! Posso explicar na próxima aula.",
+    },
+  });
+
+  console.log("Seed concluído: 3 usuários, 4 matérias, 12 aulas, 8 tarefas, matrículas, desafios, progresso, pontos e comunidade.");
 }
 
 main()
