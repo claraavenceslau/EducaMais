@@ -42,23 +42,24 @@ const CHALLENGES: { title: string; description: string; points: number; subject:
 
 async function main() {
   // ---- Usuários (semana 2 + segundo aluno para o ranking) ----
-  const password = "Senha@123";
+const password = await bcrypt.hash("Senha@123", 12);
+
 
   const ana = await prisma.user.upsert({
-    where: { email: "aluna@educamais.test" },
-    update: {},
-    create: { name: "Ana Aluna", email: "aluna@educamais.test", role: Role.STUDENT, password },
-  });
+  where: { email: "aluna@educamais.test" },
+  update: { password },
+  create: { name: "Ana Aluna", email: "aluna@educamais.test", role: Role.STUDENT, password },
+});
 
   const bruno = await prisma.user.upsert({
     where: { email: "aluno@educamais.test" },
-    update: {},
+    update: { password },
     create: { name: "Bruno Aluno", email: "aluno@educamais.test", role: Role.STUDENT, password },
   });
 
   const teacher = await prisma.user.upsert({
     where: { email: "professor@educamais.test" },
-    update: {},
+    update: { password },
     create: { name: "Carlos Professor", email: "professor@educamais.test", role: Role.TEACHER, password },
   });
 
