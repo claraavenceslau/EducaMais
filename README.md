@@ -2,7 +2,7 @@ O aplicativo mobile que funciona como um assistente de estudo pessoal. Integra c
 
 Uninassau Graças 4MC
 Membros do grupo:
-Allan Victor José Cavalcanti - 01795181 
+<p>Allan Victor José Cavalcanti - 01795181 </p>
 José Fernando Valença de Farias Pinheiro - 01815548 
 Luiz Gabryell de Queiroz Gomes - 01788272 
 Maria Clara Venceslau de Medeiros - 01797324 
