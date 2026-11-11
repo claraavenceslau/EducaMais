@@ -3,6 +3,7 @@ import cors from "cors";
 import healthRoutes from "./routes/health.routes";
 import authRoutes from "./modules/auth/auth.routes";
 import { errorMiddleware } from "./modules/auth/error.middleware";
+import taskRoutes from "./modules/tasks/tasks.routes";
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.use(cors({ origin: allowedOrigins?.length ? allowedOrigins : "*" }));
 app.use(express.json());
 app.use("/health", healthRoutes);
 app.use("/auth", authRoutes);
+app.use("/tasks", taskRoutes);
 app.use(errorMiddleware);
 
 export default app;
